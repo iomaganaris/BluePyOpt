@@ -161,7 +161,7 @@ def create():
                    for param in l5pc_cell.params.values()
                    if not param.frozen]
 
-    sim = ephys.simulators.NrnSimulator()
+    sim = ephys.simulators.NrnSimulator(use_coreneuron=True)
 
     return ephys.evaluators.CellEvaluator(
         cell_model=l5pc_cell,

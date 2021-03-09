@@ -157,6 +157,8 @@ class NrnSimulator(object):
 
         try:
             if self.use_coreneuron:
+                logger.debug("Using CoreNEURON simulator")
+                self.neuron.h.stdinit()
                 self.pc.psolve(tstop)
             else:
                 self.neuron.h.run()

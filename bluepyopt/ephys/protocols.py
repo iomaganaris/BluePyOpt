@@ -210,7 +210,7 @@ class SweepProtocol(Protocol):
         if isolate is None:
             isolate = True
 
-        if isolate:
+        if isolate and not sim.use_coreneuron:
             def _reduce_method(meth):
                 """Overwrite reduce"""
                 return (getattr, (meth.__self__, meth.__func__.__name__))

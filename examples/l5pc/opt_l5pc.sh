@@ -1,4 +1,4 @@
 #!/bin/bash
 
-nrnivmodl ./mechanisms
-python opt_l5pc.py --start
+nrnivmodl -coreneuron ./mechanisms
+python opt_l5pc.py --start -vv
