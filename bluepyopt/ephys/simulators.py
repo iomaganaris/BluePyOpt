@@ -17,7 +17,7 @@ class NrnSimulator(object):
     """Neuron simulator"""
 
     def __init__(self, dt=None, cvode_active=True, cvode_minstep=None,
-                 random123_globalindex=None):
+                 random123_globalindex=None, use_coreneuron=False):
         """Constructor"""
 
         if platform.system() == 'Windows':
@@ -35,12 +35,22 @@ class NrnSimulator(object):
         self.dt = dt if dt is not None else self.neuron.h.dt
         self.neuron.h.dt = self.dt
 
+        # CoreNEURON doesn't support variable timestep (cvode)
+        cvode_active = cvode_active and not use_coreneuron
+
         self.neuron.h.cvode_active(1 if cvode_active else 0)
         self.cvode_minstep_value = cvode_minstep
 
         self.cvode_active = cvode_active
 
         self.random123_globalindex = random123_globalindex
+
+        self.use_coreneuron = use_coreneuron
+        if use_coreneuron:
+            from neuron import coreneuron
+            coreneuron.enable = True
+            self.neuron.h.cvode.cache_efficient(1)
+            self.pc = self.neuron.h.ParallelContext()
 
     @property
     def cvode(self):
@@ -110,6 +120,9 @@ class NrnSimulator(object):
         if cvode_active is None:
             cvode_active = self.cvode_active
 
+        # CoreNEURON doesn't support variable timestep/cvode
+        cvode_active = cvode_active and not self.use_coreneuron
+
         if not cvode_active and dt is None:  # use dt of simulator
             if self.neuron.h.dt != self.dt:
                 raise Exception(
@@ -143,7 +156,10 @@ class NrnSimulator(object):
             rng.Random123_globalindex(random123_globalindex)
 
         try:
-            self.neuron.h.run()
+            if self.use_coreneuron:
+                self.pc.psolve(tstop)
+            else:
+                self.neuron.h.run()
         except Exception as e:
             raise NrnSimulatorException('Neuron simulator error', e)
 
