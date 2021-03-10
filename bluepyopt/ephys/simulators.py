@@ -35,9 +35,6 @@ class NrnSimulator(object):
         self.dt = dt if dt is not None else self.neuron.h.dt
         self.neuron.h.dt = self.dt
 
-        # CoreNEURON doesn't support variable timestep (cvode)
-        cvode_active = cvode_active and not use_coreneuron
-
         self.neuron.h.cvode_active(1 if cvode_active else 0)
         self.cvode_minstep_value = cvode_minstep
 
@@ -121,7 +118,8 @@ class NrnSimulator(object):
             cvode_active = self.cvode_active
 
         # CoreNEURON doesn't support variable timestep/cvode
-        cvode_active = cvode_active and not self.use_coreneuron
+        if cvode_active and self.use_coreneuron:
+            raise ValueError('NrnSimulator: Impossible to combine cvode and coreneuron')
 
         if not cvode_active and dt is None:  # use dt of simulator
             if self.neuron.h.dt != self.dt:
@@ -144,7 +142,7 @@ class NrnSimulator(object):
             self.neuron.h.dt = dt
             self.neuron.h.steps_per_ms = 1.0 / dt
             logger.debug(
-                'Running Neuron simulator %.6g ms, with dt=%r',
+                'Running simulator %.6g ms, with dt=%r (without cvode)',
                 tstop,
                 dt)
 
@@ -157,7 +155,7 @@ class NrnSimulator(object):
 
         try:
             if self.use_coreneuron:
-                logger.debug("Using CoreNEURON simulator")
+                logger.debug("Running CoreNEURON simulator")
                 self.neuron.h.stdinit()
                 self.pc.psolve(tstop)
             else:
